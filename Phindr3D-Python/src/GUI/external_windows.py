@@ -264,6 +264,93 @@ class paramWindow(QDialog):
         winlayout.setAlignment(Qt.AlignLeft)
         self.setLayout(winlayout)
 
+class segmentationWindow(QDialog):
+    def __init__(self):
+        super(segmentationWindow, self).__init__()
+        self.setWindowTitle("Organoid Segmentation")
+        self.setLayout(QGridLayout())
+        title = QLabel("Organoid Segmentation")
+        title.setFont(QFont('Arial', 25))
+        self.layout().addWidget(title)
+        choosemdata = QPushButton("Select Metadata File")
+
+        # Define function for button behaviour (choose metadata file, select channels, choose output
+        # directory, select segmentation channel, loading windows, create directories, TBA)
+        def segment():
+            filename, dump = QFileDialog.getOpenFileName(self, 'Select Metadata File', '', 'Text file (*.txt)')
+            if filename != '':
+                win = QDialog()
+                selectall = QPushButton("Select All")
+                ok = QPushButton("OK")
+                cancel = QPushButton("Cancel")
+                items = ["Channel 1", "Channel 2", "Channel 3", "Well", "Field", "Stack", "Metadata File", "ImageID"]
+                list = QListWidget()
+                for item in items:
+                    list.addItem(item)
+                list.setSelectionMode(QAbstractItemView.MultiSelection)
+
+                selectall.clicked.connect(lambda: list.selectAll())
+                cancel.clicked.connect(lambda: win.close())
+
+                # OK button behaviour: User has made their selection, and thus moves on to next step
+                def okClicked():
+                    win.close()
+                    selected = list.selectedItems()
+                    if selected == []:
+                        print("nothing selected")
+                    else:
+                        outputdirectory = QFileDialog.getExistingDirectory(self, "Select Output Directory")
+                        if outputdirectory != '':
+                            newlist = QListWidget()
+                            for item in items:
+                                newlist.addItem(item)
+                            newlist.setSelectionMode(QAbstractItemView.SingleSelection)
+                            wina = QDialog()
+                            wina.setLayout(QGridLayout())
+                            wina.layout().addWidget(newlist, 0, 0, 2, 2)
+                            secondok = QPushButton("OK")
+                            secondcancel = QPushButton("Cancel")
+                            secondcancel.clicked.connect(lambda: wina.close())
+                            progress = QProgressBar()
+                            # Again, new OK button behaviour: write images, with progress bar to track status
+                            def secondOkClicked():
+                                wina.close()
+                                selecteditem = newlist.selectedItems()
+                                if selecteditem == []:
+                                    print("nothing selected")
+                                else:
+                                    completed = 0
+                                    winb = QDialog()
+                                    winb.setLayout(QGridLayout())
+                                    progress.setFixedSize(500, 20)
+                                    dl = QPushButton("Download")
+                                    winb.layout().addWidget(progress, 0, 0, 2, 2)
+                                    winb.layout().addWidget(dl, 2, 1, 1, 1)
+                                    winb.show()
+                                    while completed < 100:
+                                        completed += 0.0001
+                                        progress.setValue(int(completed))
+                                    winb.exec()
+
+                            secondok.clicked.connect(lambda: secondOkClicked())
+                            wina.layout().addWidget(secondok, 2, 0, 1, 1)
+                            wina.layout().addWidget(secondcancel, 2, 1, 1, 1)
+                            wina.show()
+                            wina.exec()
+
+                ok.clicked.connect(lambda: okClicked())
+
+                win.setLayout(QGridLayout())
+                win.layout().addWidget(list, 0, 0, 2, 2)
+                win.layout().addWidget(selectall, 2, 0, 1, 2)
+                win.layout().addWidget(ok, 3, 0, 1, 1)
+                win.layout().addWidget(cancel, 3, 1, 1, 1)
+                win.show()
+                win.exec()
+
+        choosemdata.clicked.connect(segment)
+        self.layout().addWidget(choosemdata)
+
 class external_windows():
     def buildExtractWindow(self):
         return extractWindow()
@@ -273,3 +360,6 @@ class external_windows():
 
     def buildParamWindow(self):
         return paramWindow()
+
+    def buildSegmentationWindow(self):
+        return segmentationWindow()

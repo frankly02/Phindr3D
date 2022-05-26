@@ -128,6 +128,8 @@ class MainGUI(QWidget, external_windows):
 
         about = menubar.addAction("About")
 
+        segmentation = menubar.addAction("Organoid Segmentation App")
+
         # Testing purposes
         test = menubar.addMenu("Test")
         switchmeta = test.addAction("Switch Metadata")
@@ -144,6 +146,11 @@ class MainGUI(QWidget, external_windows):
             winc.show()
             winc.exec()
 
+        def organoidSegmentation():
+            wino = self.buildSegmentationWindow()
+            wino.show()
+            wino.exec()
+
         # Function purely for testing purposes, this function will switch 'foundMetadata' to true or false
         def testMetadata():
             self.foundMetadata = not self.foundMetadata
@@ -156,6 +163,7 @@ class MainGUI(QWidget, external_windows):
         expsessions.triggered.connect(exportError)
         expparameters.triggered.connect(exportError)
         about.triggered.connect(self.aboutAlert)
+        segmentation.triggered.connect(organoidSegmentation)
 
         switchmeta.triggered.connect(testMetadata)
         # Creating and formatting menubar
