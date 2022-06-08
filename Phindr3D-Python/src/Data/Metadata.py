@@ -14,6 +14,9 @@
 # You should have received a copy of the GNU General Public License
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
+# Static functions for data and metadata handling
+import DataFunctions
+
 import pandas
 import os.path
 from ImageStack import *
@@ -48,6 +51,15 @@ class Metadata:
 
     # end constructor
 
+
+    def fillMetadataFile(self):
+        """Use regular expression and file name to fill the metadata file with
+            image file information."""
+
+        # DataFunctions.createMetadata
+
+
+    # end fillMetadataFile
 
     # Teo uses a function get_files
     # files, imageIDs, treatmentids, idstreatment
@@ -169,12 +181,6 @@ class Metadata:
 
 # end class Metadata
 
-
-# Things I know:
-# In matlab version, can enter a regular expression and get back a metadata set
-# Set training folder path, analysis folder path, output file name
-# file name key? Regex simplification?
-#
 
 
 if __name__ == '__main__':
