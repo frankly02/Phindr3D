@@ -14,6 +14,10 @@
 # You should have received a copy of the GNU General Public License
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
+import pandas
+import os.path
+from ImageStack import *
+
 class Metadata:
     """This class handles groups of image files and the associated metadata.
        Individual file objects are handled by the ImageFile class.
@@ -39,6 +43,7 @@ class Metadata:
 
         # Set default values for member variables
         self.metadataFilename = ""
+        self.images = {}
 
 
     # end constructor
@@ -68,7 +73,8 @@ class Metadata:
             False on error."""
         if not isinstance(omf, str):
             return False
-        # else
+        else:
+            self.metadataFilename = omf
 
     # end SetMetadataFilename
 
@@ -84,7 +90,79 @@ class Metadata:
             argument is not a string."""
         if not isinstance(omf, str):
             return False
-        # else
+        else:
+            return os.path.exists(omf)
+
+    def loadMetadataFile(self, filepath):
+        # Loads metadata file into a hierarchy of classes
+        # Returns true if successful, prints error message and returns false if failure
+        if not self.metadataFileExists(filepath):
+            print("Error: File path is not string or valid existing file")
+            return False
+        metadata = pandas.read_table(filepath, usecols=lambda c: not c.startswith('Unnamed:'), delimiter='\t')
+        numrows = metadata.shape[0]
+        rows = []
+        # counts channels
+        channels = []
+        for col in metadata:
+            if col.startswith('Channel_'):
+                channels.append(col)
+        # if there are no channels, stack, or imageid, return error
+        if channels == [] or ('Stack' not in metadata) or ('ImageID' not in metadata):
+            print("Error: Metadata file must have a Stack column, an ImageID column, and Channel column(s)")
+            return False
+        # takes input metadata and stores in a list of tuples, each representing a row of metadata
+        for i in range(numrows):
+            row = []
+            for channel in channels:
+                row.append(metadata.at[i, channel])
+            # add additional parameter columnlabels, except for channels, stack, metadatafile, and image id
+            # these will be ordered at the end, for referencing purposes
+            # order of a row of data: Channels, Other Parameters, Stack, MetadataFile, ImageID
+            for col in metadata:
+                if col.startswith('Channel_') or col == 'Stack' or col == 'MetadataFile' or col == 'ImageID':
+                    continue
+                row.append(metadata.at[i, col])
+            row.append(metadata.at[i, 'Stack'])
+            row.append(metadata.at[i, 'MetadataFile'])
+            row.append(metadata.at[i, 'ImageID'])
+            rows.append(row)
+
+        # to make storing data in the other image classes easier, create list of column names
+        # each column's index refers to what data is stored in that index of a row
+        columnlabels = []
+        for chan in channels:
+            columnlabels.append(chan)
+        for col in metadata:
+            if col.startswith('Channel_') or col == 'Stack' or col == 'MetadataFile' or col == 'ImageID':
+                continue
+            columnlabels.append(col)
+        columnlabels.append('Stack')
+        columnlabels.append('MetadataFile')
+        columnlabels.append('ImageID')
+
+
+        # puts each row into a dictionary, sorted by image ids
+        rowdict = {}
+        for row in rows:
+            imageid = row[row.__len__() - 1]
+            if imageid in rowdict:
+                rowdict[imageid].append(row)
+            else:
+                rowdict[imageid] = []
+                rowdict[imageid].append(row)
+
+        # create list of stacks
+        stacks = {}
+        for image in rowdict:
+            stack = ImageStack()
+            stack.setStackNumber(image)
+            stack.addLayers(rowdict[image], columnlabels)
+            stacks[image] = stack
+        self.images = stacks
+        self.SetMetadataFilename(filepath)
+        return True
+
 
     # end metadataFileExists
 
@@ -104,8 +182,21 @@ if __name__ == '__main__':
 
     pass
 
+# For testing purposes:
+# Running will prompt user for a text file, image id, stack id, and channel number
+# Since this is only for testing purposes, assume inputted values are all correct types
 
-
-
-
+metadatafile = input("Metadata file: ")
+imageid = float(input("Image ID: "))
+stackid = int(input("Stack ID: "))
+channelnumber = int(input("Channel Number: "))
+test = Metadata()
+if test.loadMetadataFile(metadatafile):
+    print('Result:', test.images[imageid].layers[stackid].channels[channelnumber].channelpath)
+    # using pandas, search through dataframe to find the correct element
+    metadata = pandas.read_table(metadatafile, usecols=lambda c: not c.startswith('Unnamed:'), delimiter='\t')
+    numrows = metadata.shape[0]
+    for i in range(numrows):
+        if (metadata.at[i, 'Stack'] == stackid) and (metadata.at[i, 'ImageID'] == imageid):
+            print('Expect:', metadata.at[i, f'Channel_{channelnumber}'])
 # end main

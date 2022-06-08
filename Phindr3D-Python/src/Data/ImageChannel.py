@@ -21,7 +21,11 @@ class ImageChannel:
 
     def __init__(self):
         """ImageChannel class constructor"""
+        self.channelpath = ""
         pass
+
+    def setPath(self, channelpath):
+        self.channelpath = channelpath
 
 
 

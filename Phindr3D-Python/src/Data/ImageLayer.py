@@ -14,6 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
+from ImageChannel import *
+
 class ImageLayer:
     """This class handles groups of image files and the associated metadata.
        Static methods that draw closely from transliterations of the MATLAB functions
@@ -21,13 +23,32 @@ class ImageLayer:
 
     def __init__(self):
         """ImageChannel class constructor"""
+        self.channels = {}
+        self.otherparams = {}
         pass
 
+    def addChannels(self, row, columnlabels): # row is a list of elements from one row in metadata file
+        # rowi (row index) used to iterate row alongside columns
+        rowi = 0
+        for col in columnlabels:
+            if col.startswith('Channel_'):
+                strlen = len(col)
+                channelnum = int(col[8:strlen]) # channel number is always the 9th letter until end in 'Channel_X'
+                newchan = ImageChannel()
+                newchan.setPath(row[rowi])
+                self.channels[channelnum] = newchan
+            elif col.startswith('Stack'): # once iterator reaches 'Stack', no more additional params to store
+                return
+            else:
+                self.otherparams[col] = row[rowi]
+            rowi += 1
 
 
 
 
-# end class ImageChannel
+
+
+# end class ImageLayer
 
 
 
