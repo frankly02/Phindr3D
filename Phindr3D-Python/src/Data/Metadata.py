@@ -15,11 +15,11 @@
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
 # Static functions for data and metadata handling
-import DataFunctions
+
 
 import pandas
 import os.path
-from Image import *
+from .Image import *
 
 class Metadata:
     """This class handles groups of image files and the associated metadata.
@@ -148,8 +148,8 @@ class Metadata:
         imageSet = {}
         for imageID in rowdict:
             anImage = Image()
-            anImage.setStackNumber(imageID)
-            anImage.addLayers(rowdict[imageID], columnlabels)
+            anImage.setImageID(imageID)
+            anImage.addStackLayers(rowdict[imageID], columnlabels)
             imageSet[imageID] = anImage
         self.images = imageSet
         self.SetMetadataFilename(filepath)

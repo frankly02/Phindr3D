@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
-from Stack import Stack
+from .Stack import Stack
 
 class Image:
     """This class handles groups of image files and the associated metadata.
