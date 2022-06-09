@@ -28,8 +28,6 @@ class Metadata:
 
     def __init__(self):
         """Metadata class constructor"""
-        pass
-
 
         # Set default values for member variables
         self.metadataFilename = ""
@@ -84,6 +82,7 @@ class Metadata:
             return False
         else:
             return os.path.exists(omf)
+    # end metadataFileExists
 
     def loadMetadataFile(self, filepath):
         # Loads metadata file into a hierarchy of classes
@@ -156,7 +155,7 @@ class Metadata:
         return True
 
 
-    # end metadataFileExists
+    # end loadMetadataFile
 
 
 # end class Metadata

@@ -27,6 +27,79 @@ class DataFunctions:
     No constructor. All parameters and methods are static.
     """
 
+    # replace this with a single comparison for one file to make a dictionary with the
+    # Well, Stack, Channel, etc. to display in a window after clicking "Evaluate Regular Expression"
+
+    @staticmethod
+    def parseAndCompareRegex(sampleFile, regex):
+        """Given a sample file name string and a regex string, parse the file name
+            and find the fields specified in the regular expression. If no fields
+            can be found, return None. Otherwise, return a dictionary with the
+            field names and their values."""
+
+        # Check that both sampleFile and regex are strings
+
+        m = re.fullmatch(regex, sampleFile)
+        if m != None:
+            pass
+            # ...
+
+
+
+    # end parseAndCompareRegex
+
+
+    @staticmethod
+    def parseAndSearchRegex(folderPath, regex, numResults=-1, useAbsPath=True):
+        """This function returns an empty list if the folderPath cannot be found,
+            or if the regular expression returns no results.
+            It returns a list of file name strings on success,
+            where the number of list elements will be all the file names
+            in the directory if numResults is less than 0.
+            If numResults is less than the number of files in the directory,
+            numResults elements are returned. If numResults is greater, then
+            the list will contain all the file names in the directory."""
+
+        # Error handling
+        # directoryExists(folderPath)
+        #
+
+        regexResults = []
+        f = os.listdir(folderPath)
+        #read images in folder
+        for i, file in enumerate(f):
+            m = re.fullmatch(regex, file)
+            if m != None:
+                d = m.groupdict()
+                d['_file'] = os.path.abspath(f'{folderPath}\\{file}') if useAbsPath else file
+                regexResults.append(d)
+
+        if len(regexResults) == 0 or numResults == 0:
+            return []
+        elif numResults < 0:
+            return regexResults
+        elif len(regexResults) > numResults:
+            return regexResults[:numResults]
+        else:
+            return regexResults
+    # end parseAndSearchRegex
+
+
+
+
+    @staticmethod
+    def directoryExists(theDir):
+        """Check whether the directory specified by the string theDir exists.
+            Raises TypeError if theDir is not a string.
+            Returns True if the directory exists, False if it does not.
+            """
+        if not isinstance(theDir, str):
+            raise TypeError("Wrong type in static method DataFunctions.directoryExists. Argument must be a string.")
+        else:
+            return os.path.exists(theDir)
+    # end directoryExists
+
+
     @staticmethod
     def createMetadata(folder_path, regex, mdatafilename='metadata_python.txt'):
         """
@@ -91,7 +164,63 @@ class DataFunctions:
         df.to_csv(metadatafilename, sep='\t', index=False)
         print(f'Metadata file created at \n{metadatafilename}')
 
+    # end createMetadata
 
 # end DataFunctions
 
 
+
+
+
+def test_directoryExists():
+    """A set of tests of the static method directoryExists"""
+    success = "Success in test_directoryExists test "
+    failure = "Failure in test_directoryExists test "
+    # Test 1
+    tnum = 1
+    inVal1 = 5
+    try:
+        print(failure+str(tnum) if DataFunctions.directoryExists(inVal1) else failure+str(tnum))
+    except TypeError:
+        print(success+str(tnum))
+
+    # Test 2
+    tnum = 2
+    # Only works on Windows
+    inVal2 = "C://Windows//System32"
+    try:
+        print(success+str(tnum) if DataFunctions.directoryExists(inVal2) else failure+str(tnum))
+    except TypeError:
+        print(failure+str(tnum))
+
+    # Test 3
+    tnum = 3
+    inVal3 = "C://nowhere_but_here"
+    try:
+        print(failure+str(tnum) if DataFunctions.directoryExists(inVal3) else success+str(tnum))
+    except TypeError:
+        print(failure+str(tnum))
+# end test_directoryExists
+
+
+
+
+def test_parseAndCompareRegex():
+    """A set of tests of the static method parseAndCompareRegex"""
+    success = "Success in test_parseAndCompareRegex test "
+    failure = "Failure in test_parseAndCompareRegex test "
+    # Test 1
+    tnum = 1
+
+# end test_parseAndCompareRegex
+
+
+if __name__ == '__main__':
+    """Tests of the static methods that can be run directly."""
+    #test_directoryExists()
+
+    test_parseAndCompareRegex()
+
+
+
+# end if main
