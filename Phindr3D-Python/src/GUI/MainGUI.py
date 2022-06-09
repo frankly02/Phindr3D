@@ -45,6 +45,7 @@ class MainGUI(QWidget, external_windows):
         QMainWindow.__init__(self)
         super(MainGUI, self).__init__()
         self.foundMetadata = False
+        self.metadata = Metadata()
 
         self.setWindowTitle("Phindr3D")
 
@@ -83,11 +84,17 @@ class MainGUI(QWidget, external_windows):
 
         def loadMetadata():
             filename, dump = QFileDialog.getOpenFileName(self, 'Open File', '', 'Text files (*.txt)')
-            if filename != '':
+            if os.path.exists(filename):
                 self.foundMetadata = True
                 print(filename)
                 # When meta data is loaded, using the loaded data, change the data for image viewing
                 # Consider adding another class to store all of the data (GUIDATA in MATLab?)
+                if self.metadata.loadMetadataFile(filename):
+                    alert = self.buildErrorWindow("Load Success", QMessageBox.Information)
+                    alert.exec()
+                else:
+                    alert = self.buildErrorWindow("Load Failed", QMessageBox.Critical)
+                    alert.exec()
 
         # metadataError will check if there is metadata. If there is not, create error message.
         # Otherwise, execute button behaviour, depending on button (pass extra parameter to
@@ -204,7 +211,7 @@ class MainGUI(QWidget, external_windows):
         imgwindow.setFlat(True)
         img = QLabel()
         # Set image to whatever needs to be displayed (temporarily set as icon for testing purposes)
-        pixmap = QPixmap('C:\Program Files\Git\Phindr3D\phindr3d_icon.png')
+        pixmap = QPixmap('phindr3d_icon.png')
         imgdimension = imageparam.height() + analysisparam.height()
         pixmap = pixmap.scaled(imgdimension, imgdimension)
         img.setPixmap(pixmap)

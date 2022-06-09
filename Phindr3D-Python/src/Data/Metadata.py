@@ -15,11 +15,11 @@
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
 # Static functions for data and metadata handling
-import DataFunctions
+from .DataFunctions import DataFunctions
 
 import pandas
 import os.path
-from ImageStack import *
+from .ImageStack import *
 
 class Metadata:
     """This class handles groups of image files and the associated metadata.
@@ -192,28 +192,29 @@ class Metadata:
 
 # end class Metadata
 
-
-
-if __name__ == '__main__':
-    """Tests of the Metadata class that can be run directly."""
-
-    pass
-
 # For testing purposes:
 # Running will prompt user for a text file, image id, stack id, and channel number
 # Since this is only for testing purposes, assume inputted values are all correct types
+# Note: Need to change all imports in 'Data' to relative imports, as running this file will
+#   fail due to import errors (no parent directory)
 
-metadatafile = input("Metadata file: ")
-imageid = float(input("Image ID: "))
-stackid = int(input("Stack ID: "))
-channelnumber = int(input("Channel Number: "))
-test = Metadata()
-if test.loadMetadataFile(metadatafile):
-    print('Result:', test.images[imageid].layers[stackid].channels[channelnumber].channelpath)
-    # using pandas, search through dataframe to find the correct element
-    metadata = pandas.read_table(metadatafile, usecols=lambda c: not c.startswith('Unnamed:'), delimiter='\t')
-    numrows = metadata.shape[0]
-    for i in range(numrows):
-        if (metadata.at[i, 'Stack'] == stackid) and (metadata.at[i, 'ImageID'] == imageid):
-            print('Expect:', metadata.at[i, f'Channel_{channelnumber}'])
+if __name__ == '__main__':
+    """Tests of the Metadata class that can be run directly."""
+    metadatafile = input("Metadata file: ")
+    imageid = float(input("Image ID: "))
+    stackid = int(input("Stack ID: "))
+    channelnumber = int(input("Channel Number: "))
+    test = Metadata()
+    if test.loadMetadataFile(metadatafile):
+        print('Result:', test.images[imageid].layers[stackid].channels[channelnumber].channelpath)
+        # using pandas, search through dataframe to find the correct element
+        metadata = pandas.read_table(metadatafile, usecols=lambda c: not c.startswith('Unnamed:'), delimiter='\t')
+        numrows = metadata.shape[0]
+        for i in range(numrows):
+            if (metadata.at[i, 'Stack'] == stackid) and (metadata.at[i, 'ImageID'] == imageid):
+                print('Expect:', metadata.at[i, f'Channel_{channelnumber}'])
+    pass
+
+
+
 # end main

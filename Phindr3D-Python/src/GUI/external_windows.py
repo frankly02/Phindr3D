@@ -17,6 +17,7 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
+from ..Data import *
 import matplotlib
 from matplotlib.backend_bases import MouseButton
 import matplotlib.pyplot as plt
@@ -26,6 +27,7 @@ from scipy.spatial import distance
 import numpy as np
 from PIL import Image
 import sys
+import os
 
 #Matplotlib Figure and Interactive Mouse-Click Callback Classes
 class MplCanvas(FigureCanvasQTAgg):
@@ -154,7 +156,7 @@ class extractWindow(QDialog):
         layout = QGridLayout()
         imagerootbox = QTextEdit()
         imagerootbox.setReadOnly(True)
-        imagerootbox.setText(directory)
+        imagerootbox.setPlaceholderText(directory)
         imagerootbox.setFixedSize(300, 60)
         imagerootbox.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         imagerootbox.setFont(largetext)
@@ -165,7 +167,7 @@ class extractWindow(QDialog):
 
         samplefilebox = QTextEdit()
         samplefilebox.setReadOnly(True)
-        samplefilebox.setText(samplefilename)
+        samplefilebox.setPlaceholderText(samplefilename)
         samplefilebox.setAlignment(Qt.AlignHCenter | Qt.AlignTop)
         samplefilebox.setFont(largetext)
         samplefilebox.setFixedSize(450, 30)
@@ -195,8 +197,27 @@ class extractWindow(QDialog):
         cancel.setFixedHeight(30)
 
         # button functions
+        def selectImageDir():
+            imagedir = QFileDialog.getExistingDirectory()
+            if not os.path.exists(imagedir):
+                return
+            imagerootbox.setText(imagedir)
+            for file in os.listdir(imagedir):
+                if file.endswith('.tiff'):
+                    samplefilebox.setText(file)
+                    break
+        def createFile():
+            imagedir = imagerootbox.toPlainText()
+            regex = expressionbox.text()
+            outputname = outputfilebox.text()
+            datas = DataFunctions()
+            if os.path.exists(imagedir):
+                datas.createMetadata(imagedir, regex, outputname)
+                self.close()
 
         cancel.clicked.connect(self.close)
+        selectimage.clicked.connect(selectImageDir)
+        createfile.clicked.connect(createFile)
 
         layout.addWidget(imagerootbox, 0, 0, 1, 2)
         layout.addWidget(selectimage, 0, 2, 1, 1)
