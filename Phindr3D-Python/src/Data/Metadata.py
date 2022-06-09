@@ -52,6 +52,17 @@ class Metadata:
     # end constructor
 
 
+    # Things required
+
+
+
+
+
+
+    # If I want to raise errors, what errors should I raise?
+
+
+
     def fillMetadataFile(self):
         """Use regular expression and file name to fill the metadata file with
             image file information."""
