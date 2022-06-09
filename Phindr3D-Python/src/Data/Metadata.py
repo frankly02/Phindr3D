@@ -15,33 +15,20 @@
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
 # Static functions for data and metadata handling
-from .DataFunctions import DataFunctions
+
 
 import pandas
 import os.path
-from .ImageStack import *
+from .Image import *
 
 class Metadata:
     """This class handles groups of image files and the associated metadata.
-       Individual file objects are handled by the ImageFile class.
        Static methods that draw closely from transliterations of the MATLAB functions
        can be found in the DataFunctions class."""
 
     def __init__(self):
         """Metadata class constructor"""
-        # These are the default values from Teo's code
-        # Use them until I understand them
-        self.ID_pos = 'start'
-        self.ID_mark = None
-        self.ID_markextra = None
-        self.slice_mark = 'z'
-        self.chan_mark = 'ch'
-        self.treat_mark = None
-        self.treat_endmark = None
-        self.training_folder_path = r"FILE_name"
-        self.analysis_folder_path = self.training_folder_path
-        # The various marks are associated with reading a regex string.
-        # This is an operation performed by the MATLAB version
+        pass
 
 
         # Set default values for member variables
@@ -50,16 +37,6 @@ class Metadata:
 
 
     # end constructor
-
-
-    # Things required
-
-
-
-
-
-
-    # If I want to raise errors, what errors should I raise?
 
 
 
@@ -72,14 +49,6 @@ class Metadata:
 
     # end fillMetadataFile
 
-    # Teo uses a function get_files
-    # files, imageIDs, treatmentids, idstreatment
-    #    = phi.get_files(training_folder_path, ID_pos=ID_pos, ID_mark=ID_mark,
-    #        treat_mark=treat_mark, treat_endmark=treat_endmark, ID_markextra=ID_markextra,
-    #            slice_mark=slice_mark, chan_mark=chan_mark)
-    # Then he stores the list of files, allImageID, treatmentIDs, idstreatment
-    # tmpslices = list(files[imageIDs[0]].keys())
-    # param.numChannels = len(files[imageIDs[0]][tmpslices[0]])
 
     # This class should also include
     # rescale intensities
@@ -175,14 +144,14 @@ class Metadata:
                 rowdict[imageid] = []
                 rowdict[imageid].append(row)
 
-        # create list of stacks
-        stacks = {}
-        for image in rowdict:
-            stack = ImageStack()
-            stack.setStackNumber(image)
-            stack.addLayers(rowdict[image], columnlabels)
-            stacks[image] = stack
-        self.images = stacks
+        # create list of Images
+        imageSet = {}
+        for imageID in rowdict:
+            anImage = Image()
+            anImage.setImageID(imageID)
+            anImage.addStackLayers(rowdict[imageID], columnlabels)
+            imageSet[imageID] = anImage
+        self.images = imageSet
         self.SetMetadataFilename(filepath)
         return True
 
@@ -192,14 +161,15 @@ class Metadata:
 
 # end class Metadata
 
-# For testing purposes:
-# Running will prompt user for a text file, image id, stack id, and channel number
-# Since this is only for testing purposes, assume inputted values are all correct types
-# Note: Need to change all imports in 'Data' to relative imports, as running this file will
-#   fail due to import errors (no parent directory)
+
 
 if __name__ == '__main__':
     """Tests of the Metadata class that can be run directly."""
+
+    # For testing purposes:
+    # Running will prompt user for a text file, image id, stack id, and channel number
+    # Since this is only for testing purposes, assume inputted values are all correct types
+
     metadatafile = input("Metadata file: ")
     imageid = float(input("Image ID: "))
     stackid = int(input("Stack ID: "))
@@ -213,8 +183,4 @@ if __name__ == '__main__':
         for i in range(numrows):
             if (metadata.at[i, 'Stack'] == stackid) and (metadata.at[i, 'ImageID'] == imageid):
                 print('Expect:', metadata.at[i, f'Channel_{channelnumber}'])
-    pass
-
-
-
 # end main
