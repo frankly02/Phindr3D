@@ -14,42 +14,41 @@
 # You should have received a copy of the GNU General Public License
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
-from ImageLayer import ImageLayer
+from Stack import Stack
 
-class ImageStack:
+class Image:
     """This class handles groups of image files and the associated metadata.
-       Individual file objects are handled by the ImageFile class.
        Static methods that draw closely from transliterations of the MATLAB functions
        can be found in the DataFunctions class."""
 
     def __init__(self):
-        """ImageStack class constructor"""
-        self.stackNumber = None
-        self.layers = {}
+        """Image class constructor"""
+        self.imageID = None
+        self.stackLayers = {}
         pass
 
-    def setStackNumber(self, number):
-        self.stackNumber = number
+    def setImageID(self, number):
+        self.imageID = number
 
-    def addLayers(self, layerlist, columnlabels):
+    def addStackLayers(self, layerlist, columnlabels):
         # layerlist is a list of rows of metadata, each represented as a list of data elements
         for layer in layerlist:
             key = layer[layer.__len__() - 3] # index len - 3 will always be stack column
-            self.setStackNumber(key)
-            newLayer = ImageLayer()
-            newLayer.addChannels(layer, columnlabels)
-            self.layers[key] = newLayer
+            self.setImageID(key)
+            newStackLayer = Stack()
+            newStackLayer.addChannels(layer, columnlabels)
+            self.stackLayers[key] = newStackLayer
 
 
 
 
 
-# end class ImageStack
+# end class Image
 
 
 
 if __name__ == '__main__':
-    """Tests of the ImageStack class that can be run directly."""
+    """Tests of the Image class that can be run directly."""
 
     pass
 

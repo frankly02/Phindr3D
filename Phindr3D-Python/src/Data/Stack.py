@@ -16,13 +16,13 @@
 
 from ImageChannel import *
 
-class ImageLayer:
+class Stack:
     """This class handles groups of image files and the associated metadata.
        Static methods that draw closely from transliterations of the MATLAB functions
        can be found in the DataFunctions class."""
 
     def __init__(self):
-        """ImageChannel class constructor"""
+        """Stack class constructor"""
         self.channels = {}
         self.otherparams = {}
         pass
@@ -48,7 +48,7 @@ class ImageLayer:
 
 
 
-# end class ImageLayer
+# end class Stack
 
 
 
