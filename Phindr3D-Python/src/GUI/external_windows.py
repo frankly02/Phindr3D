@@ -202,8 +202,9 @@ class extractWindow(QDialog):
             if not os.path.exists(imagedir):
                 return
             imagerootbox.setText(imagedir)
+            # select first '.tif' or '.tiff' file to be sample file
             for file in os.listdir(imagedir):
-                if file.endswith('.tiff'):
+                if file.endswith('.tiff') or file.endswith('.tif'):
                     samplefilebox.setText(file)
                     break
         def createFile():
@@ -211,13 +212,66 @@ class extractWindow(QDialog):
             regex = expressionbox.text()
             outputname = outputfilebox.text()
             datas = DataFunctions()
+            # replace '?<' patterns with '?P<' to make compatible with re.fullmatch function
+            # first checks if '?<' corresponds to a '?<=' or '?<!' pattern first before replacing
+            # part of Python specific regular expression syntax
+
+            regexlen = regex.__len__()
+            for i in range(regexlen):
+                if regex[i] == '<':
+                    if i > 0:
+                        if regex[i - 1] == '?':
+                            if i < regexlen - 1:
+                                if regex[i + 1] != '!' and regex[i + 1] != '=':
+                                    regex = regex[:i] + 'P' + regex[i:]
             if os.path.exists(imagedir):
-                datas.createMetadata(imagedir, regex, outputname)
-                self.close()
+                created = None
+                if outputname != "":
+                    created = datas.createMetadata(imagedir, regex, outputname)
+                else:
+                    created = datas.createMetadata(imagedir, regex)
+                errormessage = "Metadata creation success."
+                if created != "Success":
+                    alert = QMessageBox()
+                    alert.setWindowTitle("Error")
+                    errormessage = "Metadata creation failed."
+                    if created == "Error: No Regex Matches":
+                        errormessage = errormessage + " No Regex matches found in selected folder."
+                    elif created == "Error: No Channel/Stack":
+                        errormessage = errormessage + " No Channel and/or Stack groups found in regex."
+                    alert.setText(errormessage)
+                    alert.setIcon(QMessageBox.Critical)
+                    alert.show()
+                    alert.exec()
+                else:
+                    alert = QMessageBox()
+                    alert.setWindowTitle("Notice")
+                    alert.setText(errormessage)
+                    alert.setIcon(QMessageBox.Information)
+                    alert.show()
+                    alert.exec()
+                    self.close()
+            else:
+                alert = QMessageBox()
+                alert.setWindowTitle("Error")
+                alert.setText("No such image directory exists.")
+                alert.setIcon(QMessageBox.Critical)
+                alert.show()
+                alert.exec()
+        def evalRegex():
+            regex = expressionbox.text()
+            samplefile = samplefilebox.toPlainText()
+            if regex == "" or samplefile == samplefilename:
+                return
+            datas = DataFunctions()
+            regexdict = datas.parseAndCompareRegex(samplefile, regex)
+            if regexdict != None:
+                print(regexdict)
 
         cancel.clicked.connect(self.close)
         selectimage.clicked.connect(selectImageDir)
         createfile.clicked.connect(createFile)
+        evaluateexpression.clicked.connect(evalRegex)
 
         layout.addWidget(imagerootbox, 0, 0, 1, 2)
         layout.addWidget(selectimage, 0, 2, 1, 1)
