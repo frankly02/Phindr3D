@@ -156,7 +156,11 @@ class Metadata:
 
 
     # end loadMetadataFile
-
+    def GetNumChannels(self):
+        for image in self.images:
+            for stack in self.images[image].stackLayers:
+                return len(self.images[image].stackLayers[stack].channels)
+        return 0 # if there are no images or no stacks, there are no channels
 
 # end class Metadata
 

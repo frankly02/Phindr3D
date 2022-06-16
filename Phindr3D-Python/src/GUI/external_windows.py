@@ -232,34 +232,27 @@ class extractWindow(QDialog):
                             if i < regexlen - 1:
                                 if regex[i + 1] != '!' and regex[i + 1] != '=':
                                     regex = regex[:i] + 'P' + regex[i:]
-            if os.path.exists(imagedir):
-                created = None
-                if outputname != "":
-                    created = datas.createMetadata(imagedir, regex, outputname)
-                else:
-                    created = datas.createMetadata(imagedir, regex)
-                errormessage = "Metadata creation success."
-                if created != "Success":
-                    alert = QMessageBox()
-                    alert.setWindowTitle("Error")
-                    errormessage = "Metadata creation failed."
-                    if created == "Error: No Regex Matches":
-                        errormessage = errormessage + " No Regex matches found in selected folder."
-                    elif created == "Error: No Channel/Stack":
-                        errormessage = errormessage + " No Channel and/or Stack groups found in regex."
-                    alert.setText(errormessage)
+            try:
+                alert = QMessageBox()
+                try:
+                    if outputname != "":
+                        created = datas.createMetadata(imagedir, regex, outputname)
+                    else:
+                        created = datas.createMetadata(imagedir, regex)
+                    if created:
+                        alert.setText("Metadata creation success.")
+                        alert.setIcon(QMessageBox.Information)
+                        alert.setWindowTitle("Notice")
+                        self.close()
+                    else:
+                        alert.setText("Error: No Regex matches found in selected folder.")
+                        alert.setIcon(QMessageBox.Critical)
+                except MissingChannelStackError:
+                    alert.setText("Error: No Channel and/or Stack groups found in regex.")
                     alert.setIcon(QMessageBox.Critical)
-                    alert.show()
-                    alert.exec()
-                else:
-                    alert = QMessageBox()
-                    alert.setWindowTitle("Notice")
-                    alert.setText(errormessage)
-                    alert.setIcon(QMessageBox.Information)
-                    alert.show()
-                    alert.exec()
-                    self.close()
-            else:
+                alert.show()
+                alert.exec()
+            except WindowsError:
                 alert = QMessageBox()
                 alert.setWindowTitle("Error")
                 alert.setText("No such image directory exists.")
