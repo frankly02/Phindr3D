@@ -187,6 +187,7 @@ class DataFunctions:
         info.Width = metadata['ImageWidth']
         info.Format = 'tif'
         return info
+    # end imfinfo
 
     @staticmethod
     def rescaleIntensity(im, low=0, high=1):
