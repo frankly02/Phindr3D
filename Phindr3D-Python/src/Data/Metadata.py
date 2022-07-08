@@ -19,6 +19,7 @@ import numpy as np
 import pandas
 import os.path
 import imageio.v2 as io
+import imagecodecs
 
 try:
     from .Image import *
@@ -260,9 +261,6 @@ class Metadata:
     def GetImage(self, theImageID):
         """Returns the Image class with the given image ID, if it is found.
             If the requested image ID is not found, returns None."""
-        # First check the type of theImageID
-        if not isinstance(theImageID, int):
-            return None
         # Attempt to get the Image object with the given ID, return None on failure
         try:
             return self.images[theImageID]
@@ -398,6 +396,83 @@ class Metadata:
         return (lowerbound, upperbound)
     # end getScalingFactorforImages
 
+    def getImageInformation(self, theImage):
+        """Get information about the image files.
+            Called in getPixelBinCenters, getImageThresholdValues,
+            extractImageLevelTextureFeatures"""
+        d = np.ones(3, dtype=int)
+        # Get one file name from the full 3D image
+        # (first file is convenient.)
+        try:
+            d[2] = len(theImage.stackLayers)
+        except AttributeError:
+            d[2] = 0
+        try:
+            # dictionaries are ordered as of Python 3.7,
+            # but we will not assume what version of Python 3 is being used
+            firstStack = theImage.stackLayers[list(theImage.stackLayers.keys())[0]]
+            firstChannel = firstStack.channels[list(firstStack.channels.keys())[0]]
+            imFileName = firstChannel.channelpath
+            # imfinfo is matlab built-in,
+            # so replicate its action in DataFunctions
+            info = DataFunctions.imfinfo(imFileName)
+            d[0] = info.Height
+            d[1] = info.Width
+        except (IndexError, AttributeError):
+            d[0] = 0
+            d[1] = 1
+        return d
+    # end getImageInformation
+
+
+
+    def getTileInfo(self, dimSize):
+        """Tile info
+
+            This method gets configuration information from PhindConfig"""
+
+
+
+    # end getTileInfo
+
+
+
+
+    def getImageThresholdValues(self, randFieldID):
+        """get image threshold values for dataset.
+            On error return one row of num channels entries, each entry np.nan
+            """
+        numChannels = self.GetNumChannels()
+        intensityThresholdValues = np.full((5000, numChannels), np.nan)  # not sure why we want 5000 rows
+        # define a value to return on error
+        errorVal = np.full((1, numChannels), np.nan)
+
+        startVal = 0
+        endVal = 0
+
+        # for each of the randomly selected images chosen in
+        for id in randFieldID:
+            theImageObject = self.GetImage(id)
+            print(id)
+            print(theImageObject)
+            d = self.getImageInformation(theImageObject)
+            print(d)
+            outval = self.getTileInfo(d)
+
+
+        # remember everything gets rescaled from 0 to 1
+        # drop rows containing nan, then take medians for each channel#intensityThresholdValues[ii]
+        return intensityThresholdValues
+    # end getImageThresholdValues
+
+
+
+
+
+    def getIndividualChannelThreshold(self):
+        """individual channel threshold"""
+
+    # end getIndividualChannelThreshold
 
 
 
@@ -416,7 +491,7 @@ class Metadata:
         (self.lowerbound, self.upperbound) = self.getScalingFactorforImages(theTrainingFields)
         #print(self.lowerbound)
         #print(self.upperbound)
-
+        self.getImageThresholdValues(theTrainingFields)
 
 
         return True
