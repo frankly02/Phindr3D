@@ -29,7 +29,7 @@ except ImportError:
     from DataFunctions import *
 
 try:
-    from ..PhindConfig import *
+    from ..PhindConfig.PhindConfig import *
 except ImportError:
     from src.PhindConfig.PhindConfig import *
 
