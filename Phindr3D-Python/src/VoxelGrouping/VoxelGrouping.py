@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
-from VoxelGroupingFunctions import VoxelGroupingFunctions
+from .VoxelGroupingFunctions import VoxelGroupingFunctions
 from ..PhindConfig import *
 
 class VoxelGrouping(VoxelGroupingFunctions):
