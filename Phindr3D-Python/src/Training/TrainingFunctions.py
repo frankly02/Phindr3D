@@ -52,9 +52,6 @@ class TrainingFunctions:
         """Currently implemented in DataFunctions.py"""
         pass
 
-    def selectPixelsbyweights(self):
-        pass
-
 
 # end TrainingFunctions
 

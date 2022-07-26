@@ -24,7 +24,7 @@ try:
 except ImportError:
     from src.PhindConfig.PhindConfig import *
 
-class VoxelBase:
+class VoxelBase(VoxelFunctions):
     """From pixels to supervoxels to megavoxels"""
 
     def __init__(self):
@@ -68,12 +68,7 @@ class VoxelBase:
         self.superVoxelZOffsetEnd = None
         self.numSuperVoxels = None
         self.numSuperVoxelsXY = None
-        pass
-
-    ## Main function for returning bin centers of pixels, supervoxels, and mega voxels
-    ## x - m x n (m is number of observations, n is number of channels/category fractions
-    ## numBins - number of categories
-    def getPixelBins(x, numBins):
+        self.numVoxelBins = initial_params.numVoxelBins
         pass
 
 # end class VoxelBase
