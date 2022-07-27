@@ -43,7 +43,7 @@ class MainGUI(QWidget, external_windows):
         """MainGUI constructor"""
         QMainWindow.__init__(self)
         super(MainGUI, self).__init__()
-        training = Training()
+        self.training = Training()
         self.metadata = Metadata()
         self.voxelGroups = VoxelGroups(self.metadata)
         self.clustering = Clustering()
