@@ -57,7 +57,7 @@ class PixelImage(VoxelBase):
             for jChan in range(metadata.GetNumChannels()):
                 if metadata.intensityNormPerTreatment:
                     img = image.stackLayers[zplane].channels[jChan + 1].channelpath
-                    croppedIM[:, :, jChan] = DataFunctions.rescaleIntensity(io.imread(img, '.tif'), low=metadata.lowerbound[jChan], high=metadata.upperbounc[jChan])  # add params later
+                    croppedIM[:, :, jChan] = DataFunctions.rescaleIntensity(io.imread(img, '.tif'), low=metadata.lowerbound[jChan], high=metadata.upperbound[jChan])  # add params later
                 else:
                     img = image.stackLayers[zplane].channels[jChan + 1].channelpath
                     croppedIM[:, :, jChan] = DataFunctions.rescaleIntensity(io.imread(img, '.tif'), low=metadata.lowerbound[jChan], high=metadata.upperbound[jChan])  # add params later
