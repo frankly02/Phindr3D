@@ -37,6 +37,10 @@ class VoxelBase:
         return VoxelFunctions.getPixelBins(x, metadata, numBins)
     # end getPixelBins (base class)
 
+    def getTileProfiles(self, metadata, training):
+        # placeholder
+        pass
+
 # end class VoxelBase
 
 

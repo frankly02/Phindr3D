@@ -15,20 +15,28 @@
 # along with src.  If not, see <http://www.gnu.org/licenses/>.
 
 try:
-    from .VoxelBase import *
+    from .PixelImage import *
+    from ..Data import *
 except ImportError:
-    from VoxelBase import *
+    from PixelImage import *
+    from src.Data import *
 
 class SuperVoxelImage(VoxelBase):
     def __init__(self):
         super().__init__()
         self.superVoxelBinCenters = None # np array
 
-    def getSuperVoxelBinCenters(self, x, metadata):
+    def getSuperVoxelBinCenters(self, metadata, training):
         # Same as getPixelBinCenters, but super
         # required: randFieldID, metadata, pixels, image params (tileinfo)
+        pixelCenters = PixelImage.getPixelBinCenters(3, metadata, training)
+        pixelBinCenterDifferences = np.array([DataFunctions.mat_dot(pixelCenters, pixelCenters, axis=1)]).T
         tilesForTraining = []
-        # do stuff here
+        for id in training.randFieldID:
+            d = metadata.getImageInformation(metadata.GetImage(id))
+            info = metadata.getTileInfo(d, metadata.theTileInfo)
+            superVoxelProfile, fgSuperVoxel = self.getTileProfiles(metadata.GetImage(id), metadata, training)
+            
 
         # pass into getPixelBins
         self.superVoxelBinCenters = self.getPixelBins(tilesForTraining)
