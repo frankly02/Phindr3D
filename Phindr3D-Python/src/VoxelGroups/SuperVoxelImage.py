@@ -26,16 +26,28 @@ class SuperVoxelImage(VoxelBase):
         super().__init__()
         self.superVoxelBinCenters = None # np array
 
-    def getSuperVoxelBinCenters(self, metadata, training):
+    def getSuperVoxelBinCenters(self, metadata, training, pixelImage):
         # Same as getPixelBinCenters, but super
         # required: randFieldID, metadata, pixels, image params (tileinfo)
-        pixelCenters = PixelImage.getPixelBinCenters(3, metadata, training)
+        pixelCenters = pixelImage.pixelBinCenters
         pixelBinCenterDifferences = np.array([DataFunctions.mat_dot(pixelCenters, pixelCenters, axis=1)]).T
         tilesForTraining = []
         for id in training.randFieldID:
             d = metadata.getImageInformation(metadata.GetImage(id))
             info = metadata.getTileInfo(d, metadata.theTileInfo)
-            superVoxelProfile, fgSuperVoxel = self.getTileProfiles(metadata.GetImage(id), metadata, training)
+            superVoxelProfile, fgSuperVoxel = self.getTileProfiles(metadata.GetImage(id), pixelCenters, pixelBinCenterDifferences, info)
+            tmp = superVoxelProfile(fgSuperVoxel)
+            if tmp.size != 0:
+                if len(tilesForTraining) == 0:
+                    tilesForTraining = tmp
+                if training.superVoxelPerField > tmp.shape[0]:
+                    tilesForTraining = np.concatenate((tilesForTraining, tmp))
+                else:
+                    tmp2Add = np.array([tmp[i, :] for i in metadata.Generator.choice(tmp.shape[0], size=training.superVoxelPerField, replace=False, shuffle=False)])
+                    tilesForTraining = np.concatenate((tilesForTraining, tmp2Add))
+            if len(tilesForTraining) == 0:
+                print('\nNo foreground super-voxels found. consider changing parameters')
+        self.superVoxelBinCenters = self.getPixelBins(tilesForTraining, metadata, self.numSuperVoxelBins)
             
 
         # pass into getPixelBins

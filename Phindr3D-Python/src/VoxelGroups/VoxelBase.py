@@ -30,6 +30,7 @@ class VoxelBase:
     def __init__(self):
         """Constructor"""
         self.numVoxelBins = PhindConfig.numVoxelBins
+        self.numSuperVoxelBins = PhindConfig.numSuperVoxelBins
         pass
 
     def getPixelBins(self, x, metadata, numBins):
@@ -37,7 +38,7 @@ class VoxelBase:
         return VoxelFunctions.getPixelBins(x, metadata, numBins)
     # end getPixelBins (base class)
 
-    def getTileProfiles(self, metadata, training):
+    def getTileProfiles(self, imageObject, pixelBinCenters, pixelBinCenterDifferences, theTileInfo):
         # placeholder
         pass
 
