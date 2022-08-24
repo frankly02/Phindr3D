@@ -17,16 +17,16 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from Data import *
-from Segmentation import *
+from ...Data import *
+from ...Segmentation import *
 from .helperclasses import *
 
 class segmentationWindow(QDialog):
-    def __init__(self):
+    def __init__(self, metadata):
         super(segmentationWindow, self).__init__()
         self.setWindowTitle("Organoid Segmentation")
         self.setLayout(QGridLayout())
-        self.metadata = Metadata()
+        self.metadata = metadata
         self.outdir = None
         self.segmentation = Segmentation()
         self.labelIM = None #numpy array or None
