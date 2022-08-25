@@ -17,16 +17,24 @@
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from ...Data import *
-from ...Segmentation import *
-from .helperclasses import *
+
+try:
+    from ...Data import *
+    from ...Segmentation import *
+    from .helperclasses import *
+except ImportError:
+    from src.Data import *
+    from src.Segmentation import *
+    from src.GUI.windows.helperclasses import *
+
+Generator = Generator()
 
 class segmentationWindow(QDialog):
     def __init__(self, metadata):
         super(segmentationWindow, self).__init__()
         self.setWindowTitle("Organoid Segmentation")
         self.setLayout(QGridLayout())
-        self.metadata = metadata
+        self.metadata = Metadata(Generator)
         self.outdir = None
         self.segmentation = Segmentation()
         self.labelIM = None #numpy array or None
@@ -70,6 +78,8 @@ class segmentationWindow(QDialog):
             scale = QLineEdit(str(self.segmentation.settings['scale_spheroid']))
             entropy = QLineEdit(str(self.segmentation.settings['entropy_threshold']))
             maximage = QLineEdit(str(self.segmentation.settings['max_img_fraction']))
+            removeborderbox = QCheckBox()
+            removeborderbox.setChecked(self.segmentation.settings['remove_border_objects'])
             confirm = QPushButton("Confirm")
             cancel = QPushButton("Cancel")
             load = QPushButton('Load settings file')
@@ -83,6 +93,7 @@ class segmentationWindow(QDialog):
                 scale.setText(str(self.segmentation.settings['scale_spheroid']))
                 entropy.setText(str(self.segmentation.settings['entropy_threshold']))
                 maximage.setText(str(self.segmentation.settings['max_img_fraction']))
+                removeborderbox.setChecked(self.segmentation.settings['remove_border_objects'])
             def updateSettingVals(self):
                 try:
                     self.segmentation.settings['min_area_spheroid'] = float(minarea.text())
@@ -92,6 +103,7 @@ class segmentationWindow(QDialog):
                     self.segmentation.settings['scale_spheroid'] = float(scale.text())
                     self.segmentation.settings['entropy_threshold'] = float(entropy.text())
                     self.segmentation.settings['max_img_fraction'] = float(maximage.text())
+                    self.segmentation.settings['remove_border_objects'] = removeborderbox.isChecked()
                     return True
                 except ValueError:
                     alert = self.buildErrorWindow('Segmentation settings can only include numerical values.', QMessageBox.Critical)
@@ -147,8 +159,10 @@ class segmentationWindow(QDialog):
             newdialog.layout().addWidget(entropy, 6, 1, 1, 1)
             newdialog.layout().addWidget(QLabel("Max Image Fraction"), 7, 0, 1, 1)
             newdialog.layout().addWidget(maximage, 7, 1, 1, 1)
-            newdialog.layout().addWidget(confirm, 8, 0, 1, 1)
-            newdialog.layout().addWidget(cancel, 8, 1, 1, 1)
+            newdialog.layout().addWidget(QLabel('Remove Border Objects'), 8, 0, 1, 1)
+            newdialog.layout().addWidget(removeborderbox, 8, 1, 1, 1)
+            newdialog.layout().addWidget(confirm, 9, 0, 1, 1)
+            newdialog.layout().addWidget(cancel, 9, 1, 1, 1)
             newdialog.setFixedSize(newdialog.minimumSizeHint())
             newdialog.show()
             newdialog.exec()

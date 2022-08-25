@@ -1,3 +1,19 @@
+# Copyright (C) 2022 Sunnybrook Research Institute
+# This file is part of src <https://github.com/DWALab/Phindr3D>.
+#
+# src is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# src is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with src.  If not, see <http://www.gnu.org/licenses/>.
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
@@ -16,6 +32,7 @@ from .colorchannelWindow import *
 import PIL.Image
 import json
 
+Generator = Generator()
 #Callback will open image associated with data point. Note: in 3D plot pan is hold left-click swipe, zoom is hold right-click swipe (zoom disabled)
 class interactive_points():
     def __init__(self, main_plot, projection, data, labels, feature_file, color, imageID):
@@ -109,7 +126,7 @@ class interactive_points():
             data = pd.read_csv(feature_file[0], sep="\t", na_values='NaN')
 
             try:
-                metadata=Metadata()
+                metadata=Metadata(Generator)
                 metadata.loadMetadataFile(data["MetadataFile"].str.replace(r'\\', '/', regex=True).iloc[0])
             except MissingChannelStackError:
                 errortext = "Metadata Extraction Failed: Channel/Stack/ImageID column(s) missing and/or invalid."
@@ -145,7 +162,11 @@ class interactive_points():
                 if radio.isChecked():
                     pjt_label=radio.text()
                     break
-            file_info.setText("Filename: " + data['Channel_1'].str.replace(r'\\', '/', regex=True).iloc[meta_loc + slicescrollbar.value()] + '\n\n Projection Type: ' + pjt_label)
+            file_text="Filename: " + data['Channel_1'].str.replace(r'\\', '/', regex=True).iloc[meta_loc + slicescrollbar.value()] + '\n\n Projection Type: ' + pjt_label
+            if len(file_text)>20:
+                #prevent text placed off-screen
+                file_text=fill(file_text, 25)
+            file_info.setText(file_text)
             # lower/upperbounds, threshold for images
             bounds = json.loads(data['bounds'].iloc[0])
             threshold = json.loads(data['intensity_thresholds'].iloc[0])

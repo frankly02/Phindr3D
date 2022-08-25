@@ -1,13 +1,34 @@
+# Copyright (C) 2022 Sunnybrook Research Institute
+# This file is part of src <https://github.com/DWALab/Phindr3D>.
+#
+# src is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# src is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with src.  If not, see <http://www.gnu.org/licenses/>.
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 import numpy as np
 import matplotlib
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg, NavigationToolbar2QT as NavigationToolbar
-from .interactive_click import interactive_points
 import pandas as pd
-from .plot_functions import *
-from ...Training import *
+try:
+    from .interactive_click import interactive_points
+    from .plot_functions import *
+    from ...Training import *
+except ImportError:
+    from src.GUI.windows.interactive_click import interactive_points
+    from src.GUI.windows.plot_functions import *
+    from src.Training import *
 
 class resultsWindow(QDialog):
     def __init__(self, color, metadata):
@@ -18,7 +39,7 @@ class resultsWindow(QDialog):
         self.plots=[]
         self.filtered_data=0
         self.numcluster=None
-        self.metadata=metadata
+        # self.metadata=metadata
         self.bounds=0
         self.color=color
         #menu tabs
@@ -98,7 +119,7 @@ class resultsWindow(QDialog):
             if dim == "2d":
                 self.projection = dim
                 self.main_plot.axes.mouse_init()
-                self.main_plot.axes.view_init(azim=-90, elev=-90)
+                self.main_plot.axes.view_init(azim=-90, elev=90)
                 self.main_plot.axes.get_zaxis().line.set_linewidth(0)
                 self.main_plot.axes.tick_params(axis='z', labelsize=0)
                 self.main_plot.draw()
@@ -178,8 +199,9 @@ class resultsWindow(QDialog):
                 grouping.addItem(col)
             grouping.blockSignals(False)
         return(grouping, win.x_press)
+
     def data_filt(self, grouping, projection, plot, new_plot):
-        filter_data= grouping.currentText()
+        filter_data = grouping.currentText()
 
         # choose dataset to use for clustering
         # Choices:
@@ -196,7 +218,6 @@ class resultsWindow(QDialog):
         texture_cols = columns[columns.map(lambda col: col.startswith('text_'))]
         featurecols = columns[columns.map(lambda col: col.startswith('MV') or col.startswith('text_'))]
         mdatacols = columns.drop(featurecols)
-
         # drop duplicate data rows:
         image_feature_data.drop_duplicates(subset=featurecols, inplace=True)
 
@@ -207,39 +228,42 @@ class resultsWindow(QDialog):
         # min-max scale all data and split to feature and metadata
         mind = np.min(image_feature_data[featurecols], axis=0)
         maxd = np.max(image_feature_data[featurecols], axis=0)
-        featuredf = (image_feature_data[featurecols] - mind) / (maxd - mind)
-        mdatadf = image_feature_data[mdatacols]
-        featuredf.dropna(axis=0, inplace=True)  # thresh=int(0.2 * featuredf.shape[0]) )
 
-        # select data
-        if len(self.filt)==1:
-            if self.filt[0] == 'MV':
+        if np.array_equal(mind, maxd) == False:
+            featuredf = (image_feature_data[featurecols] - mind) / (maxd - mind)
+            mdatadf = image_feature_data[mdatacols]
+            featuredf.dropna(axis=0, inplace=True)  # thresh=int(0.2 * featuredf.shape[0]) )
+
+            # select data
+            if len(self.filt) == 1:
+                if self.filt[0] == 'MV':
+                    X = featuredf[mv_cols].to_numpy().astype(np.float64)
+                elif self.filt[0] == 'Texture_Features':
+                    X = featuredf[texture_cols].to_numpy().astype(np.float64)
+            elif self.filt == ['MV', 'Texture_Features']:
+                X = featuredf.to_numpy().astype(np.float64)
+            else:
                 X = featuredf[mv_cols].to_numpy().astype(np.float64)
-                grouping.remove()
-            elif self.filt[0] == 'Texture_Features':
-                X = featuredf[texture_cols].to_numpy().astype(np.float64)
-        elif self.filt == ['MV','Texture_Features']:
-            X = featuredf.to_numpy().astype(np.float64)
-        else:
-            X = featuredf[mv_cols].to_numpy().astype(np.float64)
-            print('Invalid data set choice. Using Megavoxel frequencies.')
-        print('Dataset shape:', X.shape)
-        self.filtered_data=X
+                print('Invalid data set choice. Using Megavoxel frequencies.')
+            print('Dataset shape:', X.shape)
+            self.filtered_data = X
 
-        #reset imageIDs
-        self.imageIDs.clear()
-        self.imageIDs.extend(np.array(mdatadf['ImageID'], dtype='object').astype(int))
-        #reset labels
-        z=np.ones(X.shape[0]).astype(int)
-        if filter_data!="No Grouping":
-            z=np.array(mdatadf[filter_data], dtype='object')
-        self.labels.clear()
-        self.labels.extend(list(map(str, z)))
-        # misc info
-        numMVperImg = np.array(image_feature_data['NumMV']).astype(np.float64)
-        num_images_kept = X.shape[0]
-        print(f'\nNumber of images: {num_images_kept}\n')
-        result_plot(self, X, projection, plot, new_plot)
+            # reset imageIDs
+            self.imageIDs.clear()
+            self.imageIDs.extend(np.array(mdatadf['ImageID'], dtype='object').astype(int))
+            # reset labels
+            z = np.ones(X.shape[0]).astype(int)
+            if filter_data != "No Grouping":
+                z = np.array(mdatadf[filter_data], dtype='object')
+            self.labels.clear()
+            self.labels.extend(list(map(str, z)))
+            # misc info
+            numMVperImg = np.array(image_feature_data['NumMV']).astype(np.float64)
+            num_images_kept = X.shape[0]
+            print(f'\nNumber of images: {num_images_kept}\n')
+            result_plot(self, X, projection, plot, new_plot)
+        else:
+            errorWindow('Feature File Data Error', 'Check if have more than 1 row of data and that min and max values are not the same')
     def setnumcluster(self, group):
         clustnum=Clustering.setcluster(self.numcluster, self.filtered_data, self.plot_data, np.array(self.labels), group)
         self.numcluster=clustnum.clust

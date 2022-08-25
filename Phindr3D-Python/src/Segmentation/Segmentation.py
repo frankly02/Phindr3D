@@ -36,7 +36,8 @@ class Segmentation:
             'scale_spheroid':1.0,
             'entropy_threshold':1.0,
             'max_img_fraction':0.25,
-            'seg_Channel':'allChannels'
+            'seg_Channel':'allChannels',
+            'remove_border_objects':True
             }
         self.settings = self.defaultSettings
         self.metadata = None
@@ -115,7 +116,7 @@ class Segmentation:
 
                 zVals = list(imstack.stackLayers.keys())
                 channels = list(imstack.stackLayers[zVals[0]].channels.keys())
-                otherparams = imstack.stackLayers[zVals[0]].otherparams
+                otherparams = imstack.GetOtherParams()
                 filenameParts = []
                 for param in otherparams:
                     part = f'{param[0]}{otherparams[param]}'
@@ -174,9 +175,9 @@ class Segmentation:
 
 if __name__ == '__main__':
     """Tests of the Segmentation class that can be run directly."""
-    from Data import Metadata
-    
-    mdata = Metadata()
+    from Data import Metadata, Generator
+    deterministic = Generator(1234)
+    mdata = Metadata(deterministic)
     segtest = Segmentation()
 
     segtest.outputDir = 'testdata\\segmentation_tests\\check_results'

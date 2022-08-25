@@ -36,7 +36,7 @@ class setcluster(object):
         self.clust=clusternum
         #main layout
         win = QDialog()
-        win.setWindowTitle("Set Cluster")
+        win.setWindowTitle("Set Number of Clusters")
         win.setLayout(QFormLayout())
 
         label=QLabel("Enter number of clusters")
@@ -85,19 +85,27 @@ class export_cluster(object):
         if numclusters!=None:
             name = QFileDialog.getSaveFileName(None, 'Save File')[0]
             if name:
+                #get clusters/locations
                 clusters, count, idx = Clustering().computeClustering(datafilt, numclusters, np.array(list(zip(plot_data[0], plot_data[1]))))
+                #get info from feature/metadatafile
                 cols = list(pd.read_csv(featurefile, nrows=1, sep='\t'))
-                cols=list(filter(lambda col: (col.find("Channel")==-1 and col[:2]!='MV'), cols))
+                cols=list(filter(lambda col: (col.find("Channel")==-1 and col[:2]!='MV' and col!='bounds' and col!='intensity_thresholds'), cols))
                 data=pd.read_csv(featurefile, usecols = cols[:], sep='\t')
+                if 'Treatment' in cols:
+                    if data['Treatment'].isnull().all():
+                        data.drop(columns=['Treatment'], axis=1, inplace=True)
+                cols = list(pd.read_csv(data["MetadataFile"].str.replace(r'\\', '/', regex=True).iloc[0], nrows=1, sep='\t'))
                 if 'Stack' in cols:
                     stack=[]
                     metadata = pd.read_csv(data["MetadataFile"].str.replace(r'\\', '/', regex=True).iloc[0], usecols= ['Stack', 'ImageID'], sep="\t",na_values='NaN')
+
                     for ind in np.unique(metadata['ImageID'].to_numpy()):
                         idstack=metadata['Stack'].loc[metadata['ImageID'] == ind]
                         stack.append("".join((str(idstack.min()),'-', str(idstack.max()))))
                     data.rename(columns={'Stack': 'Stacks'}, inplace = True)
                     data['Stacks']=stack
                 data['Cluster Assignment'] = idx
+                #export cluster info + feature/metadatafile info
                 data.to_csv(name, sep='\t', mode='w', index=False)
         else:
             errorWindow("Export Error", "Please 'Set Number of Clusters' before using Export Cluster Results")
@@ -141,9 +149,8 @@ class piechart(object):
                 for x in range(len(parts)):
                     s1, mark=pie_slice(sum(parts[:x]), sum(parts[:x+1]))
                     self.main_plot.axes.scatter(plot_data[0][cluster], plot_data[1][cluster], marker=mark, s=s1 ** 2 *4000*rsize[size_ind], facecolor=colors[parts_ind[0][x]])
-                self.main_plot.axes.text(plot_data[0][cluster], plot_data[1][cluster], s=size_ind, horizontalalignment='center', verticalalignment='center', bbox=dict(facecolor='white', alpha=0.7))
+                self.main_plot.axes.text(plot_data[0][cluster], plot_data[1][cluster], s=size_ind+1, horizontalalignment='center', verticalalignment='center', bbox=dict(facecolor='white', alpha=0.7))
             self.main_plot.axes.set_aspect('equal')
-            self.main_plot.axes.invert_yaxis()
             self.main_plot.fig.tight_layout()
             self.main_plot.axes.axis('off')
             self.main_plot.draw()
@@ -230,9 +237,8 @@ class Clustering:
     """
     @staticmethod
     def cmdscale(D):
-        # copied from https://github.com/tompollard/sammon as no other python libraries appear to have implemented sammon mapping.
+        """ copied from https://github.com/tompollard/sammon as no other python libraries appear to have implemented sammon mapping.
 
-        """
         Classical multidimensional scaling (MDS)
 
         Parameters
@@ -293,10 +299,10 @@ class Clustering:
 
     @staticmethod
     def sammon(self, x, n, display=0, inputdist='raw', maxhalves=20, maxiter=500, tolfun=1e-9, init='default'):
-        # copied from https://github.com/tompollard/sammon as no other python libraries appear to have implemented sammon mapping.
-        # this appears to be the same implementation as is used in matlab's drtoolbox.
+        """copied from https://github.com/tompollard/sammon as no other python libraries appear to have implemented sammon mapping.
+        this appears to be the same implementation as is used in matlab's drtoolbox.
 
-        """Perform Sammon mapping on dataset x
+        Perform Sammon mapping on dataset x
         y = sammon(x) applies the Sammon nonlinear mapping procedure on
         multivariate data x, where each row represents a pattern and each column
         represents a feature.  On completion, y contains the corresponding
@@ -452,42 +458,41 @@ class Clustering:
 
     @staticmethod
     def preferenceRange(self, s, method='bound'):
-        """called in clsIn"""
-        """in third party/clustering folder"""
-        """
-        % Given a set of similarities, s, this function computes a lower
-        % bound, pmin, on the value for the preference where the optimal
-        % number of clusters (exemplars) changes from 1 to 2, and the
-        % exact value of the preference, pmax, where the optimal
-        % number of clusters changes from n-1 to n.
-        %
-        % For N data points, there may be as many as N^2-N pair-wise
-        % similarities (note that the similarity of data point i to k
-        % need not be equal to the similarity of data point k to i).
-        % These may be passed in an NxN matrix of similarities, s, where
-        % s(i,k) is the similarity of point i to point k. In fact, only
-        % a smaller number of relevant similarities need to be provided,
-        % in which case the others are assumed to be -Inf. M similarity
-        % values are known, can be passed in an Mx3 matrix s, where each
-        % row of s contains a pair of data point indices and a
-        % corresponding similarity value: s(j,3) is the similarity of
-        % data point s(j,1) to data point s(j,2).
-        %
-        % A single-cluster solution may not exist, in which case pmin is
-        % set to NaN.
-        %
-        % [pmin,pmax]=preferenceRange(s,METHOD) uses one of the methods
-        % below to compute pmin and pmax:
-        %
-        %   'exact'      Computes the exact values for pmin and pmax
-        %                (Warning: This can be quite slow)
-        %
-        %   'bound'      Computes the exact value for pmax, but estimates
-        %                pmin using a bound (default)
-        %
-        % Copyright (c) Brendan J. Frey and Delbert Dueck (2007). This
-        % software may be freely used and distributed for
-        % non-commercial purposes.
+        """called in clsIn
+        in third party/clustering folder
+        Given a set of similarities, s, this function computes a lower
+        bound, pmin, on the value for the preference where the optimal
+        number of clusters (exemplars) changes from 1 to 2, and the
+        exact value of the preference, pmax, where the optimal
+        number of clusters changes from n-1 to n.
+
+        For N data points, there may be as many as N^2-N pair-wise
+        similarities (note that the similarity of data point i to k
+        need not be equal to the similarity of data point k to i).
+        These may be passed in an NxN matrix of similarities, s, where
+        s(i,k) is the similarity of point i to point k. In fact, only
+        a smaller number of relevant similarities need to be provided,
+        in which case the others are assumed to be -Inf. M similarity
+        values are known, can be passed in an Mx3 matrix s, where each
+        row of s contains a pair of data point indices and a
+        corresponding similarity value: s(j,3) is the similarity of
+        data point s(j,1) to data point s(j,2).
+
+        A single-cluster solution may not exist, in which case pmin is
+        set to NaN.
+
+        [pmin,pmax]=preferenceRange(s,METHOD) uses one of the methods
+        below to compute pmin and pmax:
+
+          'exact'      Computes the exact values for pmin and pmax
+                       (Warning: This can be quite slow)
+
+          'bound'      Computes the exact value for pmax, but estimates
+                       pmin using a bound (default)
+
+        Copyright (c) Brendan J. Frey and Delbert Dueck (2007). This
+        software may be freely used and distributed for
+        non-commercial purposes.
         """
 
         if len(s.shape) != 2:
@@ -601,129 +606,128 @@ class Clustering:
     @staticmethod
     def apcluster(self, s, p, sparse=False, maxits=500, convits=50, dampfact=0.5, plot=False, details=False,
                   nonoise=False):
-        """in third party/clustering"""
-        """
+        """in third party/clustering
         s = similarities
         p = preferences
-        % APCLUSTER uses affinity propagation (Frey and Dueck, Science,
-        % 2007) to identify data clusters, using a set of real-valued
-        % pair-wise data point similarities as input. Each cluster is
-        % represented by a data point called a cluster center, and the
-        % method searches for clusters so as to maximize a fitness
-        % function called net similarity. The method is iterative and
-        % stops after maxits iterations (default of 500 - see below for
-        % how to change this value) or when the cluster centers stay
-        % constant for convits iterations (default of 50). The command
-        % apcluster(s,p,'plot') can be used to plot the net similarity
-        % during operation of the algorithm.
-        %
-        % For N data points, there may be as many as N^2-N pair-wise
-        % similarities (note that the similarity of data point i to k
-        % need not be equal to the similarity of data point k to i).
-        % These may be passed to APCLUSTER in an NxN matrix s, where
-        % s(i,k) is the similarity of point i to point k. In fact, only
-        % a smaller number of relevant similarities are needed for
-        % APCLUSTER to work. If only M similarity values are known,
-        % where M < N^2-N, they can be passed to APCLUSTER in an Mx3
-        % matrix s, where each row of s contains a pair of data point
-        % indices and a corresponding similarity value: s(j,3) is the
-        % similarity of data point s(j,1) to data point s(j,2).
-        %
-        % APCLUSTER automatically determines the number of clusters,
-        % based on the input p, which is an Nx1 matrix of real numbers
-        % called preferences. p(i) indicates the preference that data
-        % point i be chosen as a cluster center. A good choice is to 
-        % set all preference values to the median of the similarity
-        % values. The number of identified clusters can be increased or
-        % decreased  by changing this value accordingly. If p is a
-        % scalar, APCLUSTER assumes all preferences are equal to p.
-        %
-        % The fitness function (net similarity) used to search for
-        % solutions equals the sum of the preferences of the the data
-        % centers plus the sum of the similarities of the other data
-        % points to their data centers.
-        %
-        % The identified cluster centers and the assignments of other
-        % data points to these centers are returned in idx. idx(j) is
-        % the index of the data point that is the cluster center for
-        % data point j. If idx(j) equals j, then point j is itself a
-        % cluster center. The sum of the similarities of the data
-        % points to their cluster centers is returned in dpsim, the
-        % sum of the preferences of the identified cluster centers is
-        % returned in expref and the net similarity (sum of the data
-        % point similarities and preferences) is returned in netsim.
-        %
-        % EXAMPLE
-        %
-        % N=100; x=rand(N,2); % Create N, 2-D data points
-        % M=N*N-N; s=zeros(M,3); % Make ALL N^2-N similarities
-        % j=1;
-        % for i=1:N
-        %   for k=[1:i-1,i+1:N]
-        %     s(j,1)=i; s(j,2)=k; s(j,3)=-sum((x(i,:)-x(k,:)).^2);
-        %     j=j+1;
-        %   end;
-        % end;
-        % p=median(s(:,3)); % Set preference to median similarity
-        % [idx,netsim,dpsim,expref]=apcluster(s,p,'plot');
-        % fprintf('Number of clusters: %d\n',length(unique(idx)));
-        % fprintf('Fitness (net similarity): %f\n',netsim);
-        % figure; % Make a figures showing the data and the clusters
-        % for i=unique(idx)'
-        %   ii=find(idx==i); h=plot(x(ii,1),x(ii,2),'o'); hold on;
-        %   col=rand(1,3); set(h,'Color',col,'MarkerFaceColor',col);
-        %   xi1=x(i,1)*ones(size(ii)); xi2=x(i,2)*ones(size(ii)); 
-        %   line([x(ii,1),xi1]',[x(ii,2),xi2]','Color',col);
-        % end;
-        % axis equal tight;
-        %
-        % PARAMETERS
-        % 
-        % [idx,netsim,dpsim,expref]=apcluster(s,p,'NAME',VALUE,...)
-        % 
-        % The following parameters can be set by providing name-value
-        % pairs, eg, apcluster(s,p,'maxits',1000):
-        %
-        %   Parameter    Value
-        %   'sparse'     No value needed. Use when the number of data
-        %                points is large (eg, >3000). Normally,
-        %                APCLUSTER passes messages between every pair
-        %                of data points. This flag causes APCLUSTER
-        %                to pass messages between pairs of points only
-        %                if their input similarity is provided and
-        %                is not equal to -Inf.
-        %   'maxits'     Any positive integer. This specifies the
-        %                maximum number of iterations performed by
-        %                affinity propagation. Default: 500.
-        %   'convits'    Any positive integer. APCLUSTER decides that
-        %                the algorithm has converged if the estimated
-        %                cluster centers stay fixed for convits
-        %                iterations. Increase this value to apply a
-        %                more stringent convergence test. Default: 50.
-        %   'dampfact'   A real number that is less than 1 and
-        %                greater than or equal to 0.5. This sets the
-        %                damping level of the message-passing method,
-        %                where values close to 1 correspond to heavy
-        %                damping which may be needed if oscillations
-        %                occur.
-        %   'plot'       No value needed. This creates a figure that
-        %                plots the net similarity after each iteration
-        %                of the method. If the net similarity fails to
-        %                converge, consider increasing the values of
-        %                dampfact and maxits.
-        %   'details'    No value needed. This causes idx, netsim,
-        %                dpsim and expref to be stored after each
-        %                iteration.
-        %   'nonoise'    No value needed. Degenerate input similarities
-        %                (eg, where the similarity of i to k equals the
-        %                similarity of k to i) can prevent convergence.
-        %                To avoid this, APCLUSTER adds a small amount
-        %                of noise to the input similarities. This flag
-        %                turns off the addition of noise.
-        %
-        % Copyright (c) Brendan J. Frey and Delbert Dueck (2006). This
-        % software may be freely used and distributed for
-        % non-commercial purposes.
+        APCLUSTER uses affinity propagation (Frey and Dueck, Science,
+        2007) to identify data clusters, using a set of real-valued
+        pair-wise data point similarities as input. Each cluster is
+        represented by a data point called a cluster center, and the
+        method searches for clusters so as to maximize a fitness
+        function called net similarity. The method is iterative and
+        stops after maxits iterations (default of 500 - see below for
+        how to change this value) or when the cluster centers stay
+        constant for convits iterations (default of 50). The command
+        apcluster(s,p,'plot') can be used to plot the net similarity
+        during operation of the algorithm.
+        
+        For N data points, there may be as many as N^2-N pair-wise
+        similarities (note that the similarity of data point i to k
+        need not be equal to the similarity of data point k to i).
+        These may be passed to APCLUSTER in an NxN matrix s, where
+        s(i,k) is the similarity of point i to point k. In fact, only
+        a smaller number of relevant similarities are needed for
+        APCLUSTER to work. If only M similarity values are known,
+        where M < N^2-N, they can be passed to APCLUSTER in an Mx3
+        matrix s, where each row of s contains a pair of data point
+        indices and a corresponding similarity value: s(j,3) is the
+        similarity of data point s(j,1) to data point s(j,2).
+        
+        APCLUSTER automatically determines the number of clusters,
+        based on the input p, which is an Nx1 matrix of real numbers
+        called preferences. p(i) indicates the preference that data
+        point i be chosen as a cluster center. A good choice is to 
+        set all preference values to the median of the similarity
+        values. The number of identified clusters can be increased or
+        decreased  by changing this value accordingly. If p is a
+        scalar, APCLUSTER assumes all preferences are equal to p.
+        
+        The fitness function (net similarity) used to search for
+        solutions equals the sum of the preferences of the the data
+        centers plus the sum of the similarities of the other data
+        points to their data centers.
+        
+        The identified cluster centers and the assignments of other
+        data points to these centers are returned in idx. idx(j) is
+        the index of the data point that is the cluster center for
+        data point j. If idx(j) equals j, then point j is itself a
+        cluster center. The sum of the similarities of the data
+        points to their cluster centers is returned in dpsim, the
+        sum of the preferences of the identified cluster centers is
+        returned in expref and the net similarity (sum of the data
+        point similarities and preferences) is returned in netsim.
+        
+        EXAMPLE
+        
+        N=100; x=rand(N,2); % Create N, 2-D data points
+        M=N*N-N; s=zeros(M,3); % Make ALL N^2-N similarities
+        j=1;
+        for i=1:N
+          for k=[1:i-1,i+1:N]
+            s(j,1)=i; s(j,2)=k; s(j,3)=-sum((x(i,:)-x(k,:)).^2);
+            j=j+1;
+          end;
+        end;
+        p=median(s(:,3)); % Set preference to median similarity
+        [idx,netsim,dpsim,expref]=apcluster(s,p,'plot');
+        fprintf('Number of clusters: %d\n',length(unique(idx)));
+        fprintf('Fitness (net similarity): %f\n',netsim);
+        figure; % Make a figures showing the data and the clusters
+        for i=unique(idx)'
+          ii=find(idx==i); h=plot(x(ii,1),x(ii,2),'o'); hold on;
+          col=rand(1,3); set(h,'Color',col,'MarkerFaceColor',col);
+          xi1=x(i,1)*ones(size(ii)); xi2=x(i,2)*ones(size(ii)); 
+          line([x(ii,1),xi1]',[x(ii,2),xi2]','Color',col);
+        end;
+        axis equal tight;
+        
+        PARAMETERS
+        
+        [idx,netsim,dpsim,expref]=apcluster(s,p,'NAME',VALUE,...)
+        
+        The following parameters can be set by providing name-value
+        pairs, eg, apcluster(s,p,'maxits',1000):
+        
+          Parameter    Value
+          'sparse'     No value needed. Use when the number of data
+                       points is large (eg, >3000). Normally,
+                       APCLUSTER passes messages between every pair
+                       of data points. This flag causes APCLUSTER
+                       to pass messages between pairs of points only
+                       if their input similarity is provided and
+                       is not equal to -Inf.
+          'maxits'     Any positive integer. This specifies the
+                       maximum number of iterations performed by
+                       affinity propagation. Default: 500.
+          'convits'    Any positive integer. APCLUSTER decides that
+                       the algorithm has converged if the estimated
+                       cluster centers stay fixed for convits
+                       iterations. Increase this value to apply a
+                       more stringent convergence test. Default: 50.
+          'dampfact'   A real number that is less than 1 and
+                       greater than or equal to 0.5. This sets the
+                       damping level of the message-passing method,
+                       where values close to 1 correspond to heavy
+                       damping which may be needed if oscillations
+                       occur.
+          'plot'       No value needed. This creates a figure that
+                       plots the net similarity after each iteration
+                       of the method. If the net similarity fails to
+                       converge, consider increasing the values of
+                       dampfact and maxits.
+          'details'    No value needed. This causes idx, netsim,
+                       dpsim and expref to be stored after each
+                       iteration.
+          'nonoise'    No value needed. Degenerate input similarities
+                       (eg, where the similarity of i to k equals the
+                       similarity of k to i) can prevent convergence.
+                       To avoid this, APCLUSTER adds a small amount
+                       of noise to the input similarities. This flag
+                       turns off the addition of noise.
+        
+        Copyright (c) Brendan J. Frey and Delbert Dueck (2006). This
+        software may be freely used and distributed for
+        non-commercial purposes.
         """
         ##Global R, A, E, tmpidx, tmpnetsim, S #These get define later down, BUT maybe only behind an if statement.
         ##check inputs

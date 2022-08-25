@@ -21,7 +21,7 @@ from .colorchannelWindow import *
 import matplotlib
 import matplotlib.pyplot as plt
 from math import ceil, floor
-from textwrap import wrap, fill
+from textwrap import fill
 from .helperclasses import *
 import json
 try:
@@ -29,7 +29,6 @@ try:
     from ...Data.DataFunctions import *
     from ...Data.Metadata import *
     from ...PhindConfig.PhindConfig import PhindConfig
-
 except ImportError:
     from src.Clustering import Clustering
     from src.Data.DataFunctions import *
@@ -128,7 +127,7 @@ def reset_view(self):
     self.main_plot.axes.set_ylim3d(self.original_ylim)
     self.main_plot.axes.set_zlim3d(self.original_zlim)
     #xy-plane view
-    self.main_plot.axes.view_init(azim=-90, elev=-90)
+    self.main_plot.axes.view_init(azim=-90, elev=90)
     self.main_plot.draw()
 
 def legend_colors(self):
@@ -160,12 +159,12 @@ def save_file(self, map):
                 'y_limit': self.original_ylim,
                 'z_limit': self.original_zlim,
         }
-        with open(name, 'w') as f:
+        with open(name+'.json', 'w') as f:
             json.dump(info, f)
 
 #import plot data
 def import_file(self, map_dropdown, colordropdown, twod, threed):
-    filename= QFileDialog.getOpenFileName(self, 'Open Plot Data File', '')[0]
+    filename= QFileDialog.getOpenFileName(self, 'Open Plot Data JSON File', '', 'JSON file (*.json)')[0]
     if filename != '':
         with open(filename, "r") as f:
             try:
