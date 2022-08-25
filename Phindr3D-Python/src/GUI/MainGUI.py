@@ -236,7 +236,7 @@ class MainGUI(QWidget, external_windows):
             winz.exec()
 
         def viewResults():
-            winc = self.buildResultsWindow(self.color)
+            winc = self.buildResultsWindow(self.color, metadata)
             winc.show()
             winc.exec()
 

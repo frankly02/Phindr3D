@@ -19,8 +19,8 @@ class external_windows():
     def buildExtractWindow(self):
         return extractWindow()
 
-    def buildResultsWindow(self, color):
-        return resultsWindow(color)
+    def buildResultsWindow(self, color, metadata):
+        return resultsWindow(color, metadata)
 
     def buildParamWindow(self, supercoords, svcategories, megacoords, mvcategories, voxelnum, trainingnum, bg, norm, conditiontrain):
         return paramWindow(supercoords, svcategories, megacoords, mvcategories, voxelnum, trainingnum, bg, norm, conditiontrain)
