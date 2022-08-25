@@ -39,7 +39,7 @@ class resultsWindow(QDialog):
         self.plots=[]
         self.filtered_data=0
         self.numcluster=None
-        # self.metadata=metadata
+        self.metadata=metadata
         self.bounds=0
         self.color=color
         #menu tabs
